@@ -6,6 +6,13 @@ To install dependencies:
 bun install
 ```
 
+setup
+
+```bash
+mv .env-exmaple .env
+vi .env
+```
+
 To run:
 
 ```bash
