@@ -60,7 +60,7 @@ async function main(date: Date) {
       currentRepository = issue.repository;
     }
 
-    console.log(`- [${issue.title}](${issue.url})`);
+    console.log(`- ${issue.url}`);
   }
 }
 
