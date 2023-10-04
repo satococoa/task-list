@@ -39,7 +39,7 @@ export class GitHubService {
 
     const res = await this.octokit.request("GET /search/issues", {
       headers: this.headers(),
-      q: `involves:${username} created:${since.toISOString()}..${until.toISOString()}`,
+      q: `assignee:${username} updated:${since.toISOString()}..${until.toISOString()}`,
       per_page: 100,
     });
 
