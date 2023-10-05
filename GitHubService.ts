@@ -20,22 +20,10 @@ export class GitHubService {
       "X-GitHub-Api-Version": this.githubApiVersion,
     };
   }
-  /**
-  async fetchCommits(octokit: Octokit, user: string, date: Date) {
-    const res = await octokit.request("GET /search/commits", {
-      headers: this.headers(),
-      q: `author:${user} author-date:2023-10-01..2023-10-04`,
-    });
-    res.data.items.slice(0, 4).forEach((item) => {
-      console.log(item.commit.message);
-    });
-  }
-  */
 
   async searchPerticipatedIssues(date: Date, username: string) {
     const since = this.startOfDay(date, this.TZ_OFFSET);
-    const tomorrow = new Date(date.getTime() + 24 * 60 * 60 * 1000);
-    const until = this.startOfDay(tomorrow, this.TZ_OFFSET);
+    const until = this.endOfDay(date, this.TZ_OFFSET);
 
     const res = await this.octokit.request("GET /search/issues", {
       headers: this.headers(),
@@ -58,22 +46,43 @@ export class GitHubService {
     });
   }
 
-  async fetchPerticipatedIssues(date: Date) {
+  async searchReviewedPullRequests(date: Date, username: string) {
     const since = this.startOfDay(date, this.TZ_OFFSET);
-    const tomorrow = new Date(date.getTime() + 24 * 60 * 60 * 1000);
-    const until = this.startOfDay(tomorrow, this.TZ_OFFSET);
+    const until = this.endOfDay(date, this.TZ_OFFSET);
 
-    const res = await this.octokit.request("GET /issues", {
+    const res = await this.octokit.request("GET /search/issues", {
       headers: this.headers(),
-      filter: "subscribed",
-      state: "all",
-      sort: "updated",
-      since: since.toISOString(),
-      until: until.toISOString(),
+      q: `reviewed-by:${username} updated:${since.toISOString()}..${until.toISOString()}`,
+      per_page: 100,
     });
-    res.data.forEach((item) => {
-      console.log(item.title);
+
+    return res.data.items.map((item) => {
+      {
+        const url = new URL(item.repository_url);
+        const organization = url.pathname.split("/")[2];
+        const repository = url.pathname.split("/")[3];
+        return {
+          title: item.title,
+          url: item.html_url,
+          organization,
+          repository,
+        };
+      }
     });
+  }
+
+  // タイムゾーンを加味してその日の23:59:59を返す
+  private endOfDay(date: Date, offsetHour: number) {
+    const dateTZ = new Date(date.getTime() + offsetHour * 60 * 60 * 1000);
+    const endOfDay = new Date(
+      dateTZ.getFullYear(),
+      dateTZ.getMonth(),
+      dateTZ.getDate(),
+      23,
+      59,
+      59
+    );
+    return endOfDay;
   }
 
   // タイムゾーンを加味してその日の00:00:00を返す

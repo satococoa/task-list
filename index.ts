@@ -23,6 +23,15 @@ async function main(date: Date) {
   const { accessToken, githubApiVersion, githubUser } = extractEnv();
   const service = new GitHubService(githubApiVersion, accessToken);
   const issues = await service.searchPerticipatedIssues(date, githubUser);
+  const reviewedPullRequests = await service.searchReviewedPullRequests(
+    date,
+    githubUser
+  );
+
+  // issues と reviewedPullRequests をマージする
+  for (let reviewedPullRequest of reviewedPullRequests) {
+    issues.push(reviewedPullRequest);
+  }
 
   console.log(
     `# ${date.toLocaleDateString("ja-JP", {
